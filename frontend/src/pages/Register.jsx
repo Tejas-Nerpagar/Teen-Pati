@@ -1,22 +1,38 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Loader2 } from 'lucide-react';
 
 export default function Register() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
   const { register } = useAuth();
-  const navigate = useNavigate();
-  const [error, setError] = useState('');
+  const navigate     = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+
+    // Client-side validation
+    if (username.trim().length < 3) {
+      setError('Username must be at least 3 characters');
+      return;
+    }
+    if (password.length < 4) {
+      setError('Password must be at least 4 characters');
+      return;
+    }
+
+    setLoading(true);
     try {
-      await register(username, password);
+      await register(username.trim(), password);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
+      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -31,7 +47,11 @@ export default function Register() {
           <p className="mt-2 text-sm text-gray-400">Start your virtual ledger with ₹1,00,000</p>
         </div>
 
-        {error && <div className="mb-6 rounded-lg bg-red-500/10 p-4 text-sm text-red-500 border border-red-500/20">{error}</div>}
+        {error && (
+          <div className="mb-6 rounded-lg bg-red-500/10 p-4 text-sm text-red-400 border border-red-500/20">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
@@ -39,7 +59,10 @@ export default function Register() {
             <input
               type="text"
               required
-              className="mt-2 block w-full rounded-xl border border-gray-600 bg-gray-900/50 px-4 py-3 text-white transition focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              autoComplete="username"
+              disabled={loading}
+              minLength={3}
+              className="mt-2 block w-full rounded-xl border border-gray-600 bg-gray-900/50 px-4 py-3 text-white transition focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
@@ -49,19 +72,24 @@ export default function Register() {
             <input
               type="password"
               required
-              className="mt-2 block w-full rounded-xl border border-gray-600 bg-gray-900/50 px-4 py-3 text-white transition focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              autoComplete="new-password"
+              disabled={loading}
+              minLength={4}
+              className="mt-2 block w-full rounded-xl border border-gray-600 bg-gray-900/50 px-4 py-3 text-white transition focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
           <button
             type="submit"
-            className="w-full rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-400 active:scale-95"
+            disabled={loading}
+            className="w-full rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-400 active:scale-95 disabled:opacity-60 flex items-center justify-center gap-2"
           >
-            Create Account
+            {loading && <Loader2 size={16} className="animate-spin" />}
+            {loading ? 'Creating...' : 'Create Account'}
           </button>
         </form>
-        
+
         <p className="mt-6 text-center text-sm text-gray-400">
           Already have an account?{' '}
           <Link to="/login" className="font-semibold text-emerald-400 hover:text-emerald-300">

@@ -1,22 +1,27 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogIn } from 'lucide-react';
+import { LogIn, Loader2 } from 'lucide-react';
 
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const { login } = useAuth();
-  const navigate = useNavigate();
-  const [error, setError] = useState('');
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
+  const { login }   = useAuth();
+  const navigate    = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setLoading(true);
     try {
-      await login(username, password);
+      await login(username.trim(), password);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      setError(err.response?.data?.message || 'Login failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -31,7 +36,11 @@ export default function Login() {
           <p className="mt-2 text-sm text-gray-400">Sign in to access your ledger</p>
         </div>
 
-        {error && <div className="mb-6 rounded-lg bg-red-500/10 p-4 text-sm text-red-500 border border-red-500/20">{error}</div>}
+        {error && (
+          <div className="mb-6 rounded-lg bg-red-500/10 p-4 text-sm text-red-400 border border-red-500/20">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
@@ -39,7 +48,9 @@ export default function Login() {
             <input
               type="text"
               required
-              className="mt-2 block w-full rounded-xl border border-gray-600 bg-gray-900/50 px-4 py-3 text-white transition focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              autoComplete="username"
+              disabled={loading}
+              className="mt-2 block w-full rounded-xl border border-gray-600 bg-gray-900/50 px-4 py-3 text-white transition focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
@@ -49,19 +60,23 @@ export default function Login() {
             <input
               type="password"
               required
-              className="mt-2 block w-full rounded-xl border border-gray-600 bg-gray-900/50 px-4 py-3 text-white transition focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              autoComplete="current-password"
+              disabled={loading}
+              className="mt-2 block w-full rounded-xl border border-gray-600 bg-gray-900/50 px-4 py-3 text-white transition focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
           <button
             type="submit"
-            className="w-full rounded-xl bg-indigo-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-400 active:scale-95"
+            disabled={loading}
+            className="w-full rounded-xl bg-indigo-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-400 active:scale-95 disabled:opacity-60 flex items-center justify-center gap-2"
           >
-            Sign In
+            {loading && <Loader2 size={16} className="animate-spin" />}
+            {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
-        
+
         <p className="mt-6 text-center text-sm text-gray-400">
           Don't have an account?{' '}
           <Link to="/register" className="font-semibold text-indigo-400 hover:text-indigo-300">
