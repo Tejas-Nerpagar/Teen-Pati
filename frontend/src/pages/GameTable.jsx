@@ -32,7 +32,6 @@ export default function GameTable() {
 
   // Per-action loading flags
   const [loading, setLoading] = useState({});
-  const setActionLoading = (key, val) => setLoading(prev => ({ ...prev, [key]: val }));
 
   const fetchRoomState = useCallback(async () => {
     try {
@@ -75,14 +74,14 @@ export default function GameTable() {
   // ── Helpers ────────────────────────────────────────────────────────────────
   const doAction = async (key, fn) => {
     setError('');
-    setActionLoading(key, true);
+    setLoading(prev => ({ ...prev, [key]: true }));
     try {
       await fn();
       await fetchUser();
     } catch (err) {
-      setError(err.response?.data?.message || 'Action failed');
+      setError(err.response?.data?.message || err.message || 'Action failed');
     } finally {
-      setActionLoading(key, false);
+      setLoading(prev => ({ ...prev, [key]: false }));
     }
   };
 
@@ -103,7 +102,11 @@ export default function GameTable() {
   const showCards = () => doAction('show',  () => api.post('/show',        { room_id: id }));
 
   const addGuest = () => doAction('guest', async () => {
-    if (!guestName.trim()) throw { response: { data: { message: 'Enter a guest name' } } };
+    if (!guestName.trim()) {
+      const err = new Error('Enter a guest name');
+      err.response = { data: { message: 'Enter a guest name' } };
+      throw err;
+    }
     await api.post('/join-guest', { room_id: id, guest_name: guestName.trim() });
     setGuestName('');
   });

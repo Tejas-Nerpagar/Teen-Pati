@@ -344,12 +344,12 @@ export const getRoomState = async (req, res) => {
   try {
     const room = await Room.findByPk(req.params.id, {
       include: [
-        { model: Player, include: [{ model: User, attributes: ['username'] }] },
-        {
-          model: Transaction,
-          include: [{ model: User, attributes: ['username'] }],
-          order: [['createdAt', 'DESC']],
-        },
+        { model: Player, include: [{ model: User, attributes: ['id', 'username'] }] },
+        { model: Transaction, include: [{ model: User, attributes: ['id', 'username'] }] },
+      ],
+      order: [
+        [Player, 'turn_order', 'ASC'],
+        [Transaction, 'createdAt', 'DESC'],
       ],
     });
     if (!room) return res.status(404).json({ message: 'Room not found' });
