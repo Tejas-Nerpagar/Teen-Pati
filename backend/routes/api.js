@@ -1,30 +1,31 @@
 import express from 'express';
-import { register, login, getMe } from '../controllers/authController.js';
-import { createRoom, joinRoom, joinGuest, startGame, bet, fold, show, pass, manualBet, declareWinner, getRoomState } from '../controllers/gameController.js';
-import { authenticate } from '../middleware/authMiddleware.js';
+import { getMe } from '../controllers/authController.js';
+import {
+  createRoom, joinRoom, joinGuest, startGame,
+  bet, fold, show, pass, manualBet, declareWinner, getRoomState
+} from '../controllers/gameController.js';
+import { identifyUser } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Auth
-router.post('/register', register);
-router.post('/login', login);
-router.get('/me', authenticate, getMe);
+// All routes use identifyUser — reads X-Username header, auto-creates user
+router.get('/me',            identifyUser, getMe);
 
-// Game setup
-router.post('/create-room', authenticate, createRoom);
-router.post('/join-room', authenticate, joinRoom);
-router.post('/join-guest', authenticate, joinGuest); // offline mode host adding guest
-router.get('/room/:id', authenticate, getRoomState);
+// Room
+router.post('/create-room',  identifyUser, createRoom);
+router.post('/join-room',    identifyUser, joinRoom);
+router.post('/join-guest',   identifyUser, joinGuest);
+router.get('/room/:id',      identifyUser, getRoomState);
 
 // Gameplay
-router.post('/start-game', authenticate, startGame);
-router.post('/bet', authenticate, bet);
-router.post('/fold', authenticate, fold);
-router.post('/show', authenticate, show);
-router.post('/declare-winner', authenticate, declareWinner);
+router.post('/start-game',   identifyUser, startGame);
+router.post('/bet',          identifyUser, bet);
+router.post('/fold',         identifyUser, fold);
+router.post('/show',         identifyUser, show);
+router.post('/declare-winner', identifyUser, declareWinner);
 
-// Offline Pass-Pass mode
-router.post('/pass', authenticate, pass);
-router.post('/manual-bet', authenticate, manualBet);
+// Offline Pass-Pass
+router.post('/pass',         identifyUser, pass);
+router.post('/manual-bet',   identifyUser, manualBet);
 
 export default router;

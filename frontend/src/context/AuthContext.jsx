@@ -6,90 +6,79 @@ const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser]     = useState(null);
-  const [token, setToken]   = useState(() => localStorage.getItem('token') || null);
-  const [loading, setLoading] = useState(true);
+  const [username, setUsername] = useState(() => localStorage.getItem('username') || null);
+  const [user, setUser]         = useState(null);
+  const [loading, setLoading]   = useState(true);
 
-  // ── Create the axios instance ONCE (avoids interceptor pile-up on re-render)
+  // Create axios instance once
   const apiRef = useRef(null);
   if (!apiRef.current) {
     apiRef.current = axios.create({ baseURL: 'http://localhost:5000/api' });
   }
   const api = apiRef.current;
 
-  // Keep a ref so the interceptor always reads the latest token
-  const tokenRef = useRef(token);
-  useEffect(() => {
-    tokenRef.current = token;
-  }, [token]);
+  // Keep username ref for interceptor
+  const usernameRef = useRef(username);
+  useEffect(() => { usernameRef.current = username; }, [username]);
 
-  // Attach interceptor exactly once
+  // Attach X-Username interceptor once
   useEffect(() => {
-    const interceptorId = api.interceptors.request.use((config) => {
-      if (tokenRef.current) {
-        config.headers.Authorization = `Bearer ${tokenRef.current}`;
+    const id = api.interceptors.request.use((config) => {
+      if (usernameRef.current) {
+        config.headers['X-Username'] = usernameRef.current;
       }
       return config;
     });
-    return () => api.interceptors.request.eject(interceptorId);
+    return () => api.interceptors.request.eject(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── fetchUser ────────────────────────────────────────────────────────────────
+  // Fetch user data from backend whenever username changes
   const fetchUser = useCallback(async () => {
+    if (!usernameRef.current) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
     try {
       const res = await api.get('/me');
       setUser(res.data);
     } catch (error) {
-      console.error('Failed to fetch user:', error);
-      // Token is invalid / expired — clear auth state
-      localStorage.removeItem('token');
-      setToken(null);
+      console.error('fetchUser failed:', error);
       setUser(null);
     } finally {
       setLoading(false);
     }
   }, [api]);
 
-  // Sync token → localStorage and user on token change
   useEffect(() => {
-    if (token) {
-      localStorage.setItem('token', token);
+    if (username) {
+      localStorage.setItem('username', username);
+      usernameRef.current = username;
       fetchUser();
     } else {
-      localStorage.removeItem('token');
+      localStorage.removeItem('username');
       setUser(null);
       setLoading(false);
     }
-  }, [token, fetchUser]);
+  }, [username, fetchUser]);
 
-  // ── login ─────────────────────────────────────────────────────────────────────
-  const login = async (username, password) => {
-    const res = await api.post('/login', { username, password });
-    // Update the ref immediately so the next request (fetchUser) carries the token
-    tokenRef.current = res.data.token;
-    setToken(res.data.token);
-    setUser(res.data.user);
+  // Enter game with just a name
+  const enterGame = (name) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    usernameRef.current = trimmed;
+    setUsername(trimmed);
   };
 
-  // ── register ─────────────────────────────────────────────────────────────────
-  // Backend now returns {token, user} directly from /register — no second login call needed
-  const register = async (username, password) => {
-    const res = await api.post('/register', { username, password });
-    tokenRef.current = res.data.token;
-    setToken(res.data.token);
-    setUser(res.data.user);
-  };
-
-  // ── logout ────────────────────────────────────────────────────────────────────
   const logout = () => {
-    tokenRef.current = null;
-    setToken(null);
+    usernameRef.current = null;
+    setUsername(null);
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, api, login, register, logout, loading, fetchUser }}>
+    <AuthContext.Provider value={{ user, username, api, enterGame, logout, loading, fetchUser }}>
       {children}
     </AuthContext.Provider>
   );

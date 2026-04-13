@@ -1,38 +1,39 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
-import Login from './pages/Login';
-import Register from './pages/Register';
+import NameEntry from './pages/NameEntry';
 import Dashboard from './pages/Dashboard';
 import GameTable from './pages/GameTable';
 
 const PrivateRoute = ({ children }) => {
-  const { token, loading } = useAuth();
-  if (loading) return <div className="text-white text-center mt-20">Loading...</div>;
-  return token ? children : <Navigate to="/login" />;
+  const { username, loading } = useAuth();
+  if (loading) return (
+    <div className="flex h-screen items-center justify-center text-gray-400 text-sm">
+      Loading...
+    </div>
+  );
+  return username ? children : <Navigate to="/" replace />;
 };
 
 function AppRoutes() {
+  const { username } = useAuth();
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route 
-        path="/" 
-        element={
-          <PrivateRoute>
-             <Dashboard />
-          </PrivateRoute>
-        } 
+      {/* Name entry — redirect to dashboard if already named */}
+      <Route
+        path="/"
+        element={username ? <Navigate to="/dashboard" replace /> : <NameEntry />}
       />
-      <Route 
-        path="/room/:id" 
-        element={
-          <PrivateRoute>
-             <GameTable />
-          </PrivateRoute>
-        } 
+      <Route
+        path="/dashboard"
+        element={<PrivateRoute><Dashboard /></PrivateRoute>}
       />
+      <Route
+        path="/room/:id"
+        element={<PrivateRoute><GameTable /></PrivateRoute>}
+      />
+      {/* Catch-all redirect */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
@@ -42,7 +43,7 @@ function App() {
     <Router>
       <AuthProvider>
         <SocketProvider>
-          <div className="min-h-screen bg-gray-900 text-gray-100 font-sans selection:bg-indigo-500/30">
+          <div className="min-h-screen bg-gray-900 text-gray-100 font-sans selection:bg-amber-500/30">
             <AppRoutes />
           </div>
         </SocketProvider>

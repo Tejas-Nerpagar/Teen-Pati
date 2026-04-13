@@ -1,28 +1,28 @@
-import jwt from 'jsonwebtoken';
+import { User } from '../models/index.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
+/**
+ * No-auth middleware: reads username from the X-Username header,
+ * finds or auto-creates the user, and attaches req.user.
+ */
+export const identifyUser = async (req, res, next) => {
+  const username = req.headers['x-username'];
 
-export const authenticate = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'No token provided. Please log in.' });
-  }
-
-  const token = authHeader.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ message: 'Malformed token' });
+  if (!username || !username.trim()) {
+    return res.status(400).json({ message: 'Username is required. Set the X-Username header.' });
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;   // { id, username, iat, exp }
+    const [user] = await User.findOrCreate({
+      where: { username: username.trim() },
+      defaults: { balance: 100000 },
+    });
+    req.user = { id: user.id, username: user.username };
     next();
   } catch (error) {
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({ message: 'Session expired. Please log in again.' });
-    }
-    return res.status(401).json({ message: 'Invalid token. Please log in again.' });
+    console.error('identifyUser error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
+
+// Kept for compatibility — just calls identifyUser
+export const authenticate = identifyUser;

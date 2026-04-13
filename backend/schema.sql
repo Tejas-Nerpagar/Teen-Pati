@@ -14,10 +14,11 @@ USE teen_patti;
 -- -------------------------------------------------------
 -- 1. Users
 -- -------------------------------------------------------
+-- No authentication: users are identified by username only.
+-- Auto-created on first request via identifyUser middleware.
 CREATE TABLE IF NOT EXISTS Users (
   id          INT          NOT NULL AUTO_INCREMENT,
   username    VARCHAR(255) NOT NULL UNIQUE,
-  password    VARCHAR(255) NOT NULL,
   balance     INT          NOT NULL DEFAULT 100000,
   createdAt   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updatedAt   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

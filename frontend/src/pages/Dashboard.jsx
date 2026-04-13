@@ -4,13 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import { LogOut, Plus, Users, Wallet, Loader2 } from 'lucide-react';
 
 export default function Dashboard() {
-  const { user, api, logout, fetchUser } = useAuth();
-  const [roomId, setRoomId] = useState('');
+  const { user, username, api, logout, fetchUser } = useAuth();
+  const [roomId, setRoomId]           = useState('');
   const [entryAmount, setEntryAmount] = useState(100);
   const [createError, setCreateError] = useState('');
-  const [joinError, setJoinError] = useState('');
-  const [creating, setCreating] = useState(false);
-  const [joining, setJoining] = useState(false);
+  const [joinError, setJoinError]     = useState('');
+  const [creating, setCreating]       = useState(false);
+  const [joining, setJoining]         = useState(false);
   const navigate = useNavigate();
 
   // Refresh balance on mount
@@ -49,17 +49,17 @@ export default function Dashboard() {
       {/* Header */}
       <header className="mb-10 flex items-center justify-between glass rounded-2xl p-6">
         <div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-emerald-400 bg-clip-text text-transparent">
-            Welcome, {user?.username}
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-amber-400 to-emerald-400 bg-clip-text text-transparent">
+            Hey, {username} 👋
           </h1>
           <div className="mt-2 flex items-center text-emerald-400 font-mono text-xl">
             <Wallet className="mr-2" size={22} />
-            ₹{user?.balance?.toLocaleString('en-IN')}
+            ₹{(user?.balance ?? '—').toLocaleString?.('en-IN') ?? user?.balance ?? '—'}
           </div>
         </div>
         <button
           onClick={logout}
-          title="Logout"
+          title="Change name / Logout"
           className="rounded-full bg-gray-800 p-3 text-gray-400 hover:bg-red-500/20 hover:text-red-400 transition"
         >
           <LogOut size={22} />

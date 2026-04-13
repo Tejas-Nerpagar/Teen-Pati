@@ -12,14 +12,10 @@ const User = sequelize.define('User', {
     unique: true,
     allowNull: false,
   },
-  password: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
   balance: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    defaultValue: 100000,
+    defaultValue: 100000, // Start with ₹1,00,000
   },
 });
 
